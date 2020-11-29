@@ -7,11 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 import javax.swing.JPanel;
 
 import static java.lang.Math.abs;
@@ -24,6 +20,30 @@ public class GraphicsDisplay extends JPanel {
     private boolean showAxis = true;
     private boolean showMarkers = true;
     private boolean showGrid = true;
+    private boolean Rotate = true;
+    private boolean isConcreteValue(double value)
+    {
+        int toControl = 0;
+        int countBadValues = 0;
+        do
+            {
+            toControl = (int)value % 10;
+            value /= 10;
+            System.out.println(toControl);
+            if(toControl%2 != 0)
+            {
+                countBadValues++;
+            }
+        } while(value != 0);
+        if(countBadValues == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
     // Границы диапазона пространства, подлежащего отображению
     private double minX;
     private double maxX;
@@ -44,11 +64,11 @@ public class GraphicsDisplay extends JPanel {
         setBackground(Color.WHITE);
 // Сконструировать необходимые объекты, используемые в рисовании
 // Перо для рисования графика
-        graphicsStroke = new BasicStroke(5.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[] {16, 4, 4, 4, 8, 4, 4, 4, 16, 8}, 0.0f);
+        graphicsStroke = new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10.0f, new float[] {16, 4, 4, 4, 8, 4, 4, 4, 16, 8}, 0.0f);
 // Перо для рисования осей координат
         axisStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
 // Перо для рисования контуров маркеров
-        markerStroke = new BasicStroke(11.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
+        markerStroke = new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         //Pero for painting grid lines
         gridStroke = new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
 // Шрифт для подписей осей координат
@@ -80,6 +100,10 @@ public class GraphicsDisplay extends JPanel {
     {
         this.showGrid = showGrid;
         repaint();
+    }
+    public void setRotate(boolean Rotate)
+    {
+        this.Rotate = Rotate;
     }
     // Метод отображения всего компонента, содержащего график
     public void paintComponent(Graphics g) {
@@ -153,6 +177,8 @@ minY
         paintGraphics(canvas);
 // Затем (если нужно) отображаются маркеры точек, по которым строился график.
         if (showMarkers) paintMarkers(canvas);
+        // rotate
+        if (Rotate) rotateTo90left(canvas);
 // Шаг 9 - Восстановить старые настройки холста
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
@@ -197,6 +223,7 @@ minY
         canvas.setColor(Color.RED);
 // Выбрать красный цвет для закрашивания маркеров внутри
         canvas.setPaint(Color.RED);
+        GeneralPath lastMarker = null;
 // Шаг 2 - Организовать цикл по всем точкам графика
         for (Double[] point : graphicsData) {
 // Инициализировать эллипс как объект для представления маркера
@@ -206,12 +233,38 @@ minY
 и угла прямоугольника, в который он вписан */
 // Центр - в точке (x,y)
             Point2D.Double center = xyToPoint(point[0], point[1]);
-// Угол прямоугольника - отстоит на расстоянии (3,3)
-            Point2D.Double corner = shiftPoint(center, 3, 3);
-// Задать эллипс по центру и диагонали
-            marker.setFrameFromCenter(center, corner);
-            canvas.draw(marker); // Начертить контур маркера
-            canvas.fill(marker); // Залить внутреннюю область маркера
+            if(isConcreteValue(point[1]))
+            {
+                canvas.setColor(Color.BLUE);
+                canvas.setPaint(Color.BLUE);
+            }
+            else
+            {
+                canvas.setColor(Color.RED);
+                canvas.setPaint(Color.RED);
+            }
+            GeneralPath star = new GeneralPath();
+            java.awt.geom.Point2D.Double cent = this.xyToPoint(point[0], point[1]);
+            star.moveTo(cent.getX(), cent.getY());
+            star.lineTo(star.getCurrentPoint().getX(), star.getCurrentPoint().getY() - 5.0D);
+            star.moveTo(star.getCurrentPoint().getX() - 3.0D, star.getCurrentPoint().getY());
+            star.lineTo(star.getCurrentPoint().getX() + 6.0D, star.getCurrentPoint().getY());
+            star.moveTo(center.getX(), center.getY());
+            star.lineTo(star.getCurrentPoint().getX(), star.getCurrentPoint().getY() + 5.0D);
+            star.moveTo(star.getCurrentPoint().getX() - 3.0D, star.getCurrentPoint().getY());
+            star.lineTo(star.getCurrentPoint().getX() + 6.0D, star.getCurrentPoint().getY());
+            star.moveTo(center.getX(), center.getY());
+            star.lineTo(star.getCurrentPoint().getX() - 5.0D, star.getCurrentPoint().getY());
+            star.moveTo(star.getCurrentPoint().getX(), star.getCurrentPoint().getY() - 3.0D);
+            star.lineTo(star.getCurrentPoint().getX(), star.getCurrentPoint().getY() + 6.0D);
+            star.moveTo(center.getX(), center.getY());
+            star.lineTo(star.getCurrentPoint().getX() + 5.0D, star.getCurrentPoint().getY());
+            star.moveTo(star.getCurrentPoint().getX(), star.getCurrentPoint().getY() - 3.0D);
+            star.lineTo(star.getCurrentPoint().getX(), star.getCurrentPoint().getY() + 6.0D);
+
+                canvas.draw(star);
+                canvas.fill(star);
+
         }
     }
 
@@ -287,162 +340,267 @@ minY
                     bounds.getWidth() - 10), (float) (labelPos.getY() + bounds.getY()));
         }
     }
+    protected void rotateTo90left(Graphics2D canvas)
+    {
+        AffineTransform at;
+        at = AffineTransform.getRotateInstance(-1.5707963267948966D, this.getSize().getWidth() / 2.0D, this.getSize().getHeight() / 2.0D);
+        at.concatenate(new AffineTransform(this.getSize().getHeight() / this.getSize().getWidth(), 0.0D, 0.0D, this.getSize().getWidth() / this.getSize().getHeight(), (this.getSize().getWidth() - this.getSize().getHeight()) / 2.0D, (this.getSize().getHeight() - this.getSize().getWidth()) / 2.0D));
+        canvas.setTransform(at);
+    }
 protected void paintGrid(Graphics2D canvas)
     {
+
         int numberOfSection = 0;
         canvas.setStroke(gridStroke);
-        for(double i = 0; i <= maxY; i+=0.05*(maxY-minY)) {
-            Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(minX, i), xyToPoint(maxX, i));
+        canvas.setColor(Color.GRAY);
+        // up to 0
+        for(double i = 0; i <= maxX; i+=0.05*((int)maxY-(int)minY)) {
+            System.out.println(i);
+            Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint((int)minX, i), xyToPoint((int)maxX, i));
             canvas.draw(horizontalGridLine);
-            for(double j = minY+0.005*(maxY-minY); j <= maxY; j+=0.005*(maxY-minY))
+            if(minY < 0) {
+                for (double j = 0; j > minX; j -= 0.005 * (maxY - minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
+                }
+                numberOfSection = 0;
+            }
+            else
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection%10 != 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * (maxY - minY), j), xyToPoint(i + 0.007 * (maxY - minY), j));
-                    canvas.draw(testGridLine);
+                for (double j = 0; j < minX; j += 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
                 }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * (maxY - minY), j), xyToPoint(i + 0.005 * (maxY - minY), j));
-                    canvas.draw(testGridLine);
-                }
+                numberOfSection = 0;
             }
             numberOfSection = 0;
-            for(double j = 0.005*(maxY-minY); j <= maxX; j+=0.005*(maxY-minY))
-            {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection % 10 != 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * (maxY - minY)), xyToPoint(j, i + 0.007 * (maxY - minY)));
-                    canvas.draw(testGridLine);
+            if(maxX < 0) {
+                for (double j = 0; j > maxX; j -= 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
                 }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * (maxY - minY)), xyToPoint(j, i + 0.005 * (maxY - minY)));
-                    canvas.draw(testGridLine);
-                }
+                numberOfSection = 0;
             }
-            numberOfSection = 0;
-            for(double j = -0.005*(maxY-minY); j >= minX; j-=0.005*(maxY-minY))
+            else
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection % 10 != 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * (maxY - minY)), xyToPoint(j, i + 0.007 * (maxY - minY)));
-                    canvas.draw(testGridLine);
+                for (double j = 0; j < maxX; j += 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
                 }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * (maxY - minY)), xyToPoint(j, i + 0.005 * (maxY - minY)));
-                    canvas.draw(testGridLine);
-                }
+                numberOfSection = 0;
             }
-            numberOfSection = 0;
+
         }
-        for(double i = 0; i >= minY; i-=0.05*(maxY-minY)) {
-            Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(minX, i), xyToPoint(maxX, i));
+        // 0 to dwn
+        for(double i = 0; i > minX; i-=0.05*(maxY-minY)) {
+            Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint((int)minX, i), xyToPoint((int)maxX, i));
             canvas.draw(horizontalGridLine);
-            for(double j = minY+0.005*(maxY-minY); j <= maxY; j+=0.005*(maxY-minY))
+            if(minY < 0) {
+                for (double j = 0; j > minY; j -= 0.005 * (maxY - minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
+                }
+                numberOfSection = 0;
+            }
+            else
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection%10 != 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * (maxY - minY), j), xyToPoint(i + 0.007 * (maxY - minY), j));
-                    canvas.draw(testGridLine);
+                for (double j = 0; j < minX; j += 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
                 }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * (maxY - minY), j), xyToPoint(i + 0.005 * (maxY - minY), j));
-                    canvas.draw(testGridLine);
+                numberOfSection = 0;
+            }
+            if(maxX < 0) {
+                for (double j = 0; j > maxX; j -= 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
                 }
+                numberOfSection = 0;
+            }
+            else
+            {
+                for (double j = 0; j < maxX; j += 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
+                }
+                numberOfSection = 0;
             }
         }
         for(double i = 0; i <= maxX; i+=(0.05*(maxY-minY))) {
-            Line2D.Double verticalGridLine = new Line2D.Double(xyToPoint(i, minY), xyToPoint(i, maxY));
+            Line2D.Double verticalGridLine = new Line2D.Double(xyToPoint(i, (int)minY), xyToPoint(i, (int)maxY));
             canvas.draw(verticalGridLine);
-            for(double j = minY+0.005*(maxY-minY); j <= maxY; j+=0.005*(maxY-minY))
+            for(double j = 0; j <= maxY; j+=0.005*(maxY-minY))
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection%10 != 0)
+
+                if(numberOfSection%5 == 0)
                 {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * (maxY - minY), j), xyToPoint(i + 0.007 * (maxY - minY), j));
+                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
                     canvas.draw(testGridLine);
                 }
                 else
                 {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * (maxY - minY), j), xyToPoint(i + 0.005 * (maxY - minY), j));
+                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
                     canvas.draw(testGridLine);
                 }
+                numberOfSection++;
+            }
+            numberOfSection = 0;
+            if(minX < 0) {
+                for (double j = 0; j > minX; j -= 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
+                }
+                numberOfSection = 0;
+            }
+            else
+            {
+                for (double j = 0; j < minX; j += 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
+                }
+                numberOfSection = 0;
             }
         }
         for(double i = 0; i >=minX; i-=(0.05*(maxY-minY))) {
-            Line2D.Double verticalGridLine = new Line2D.Double(xyToPoint(i, minY), xyToPoint(i, maxY));
+            Line2D.Double verticalGridLine = new Line2D.Double(xyToPoint(i, (int)minY), xyToPoint(i, (int)maxY));
             canvas.draw(verticalGridLine);
-            for(double j = minY+0.005*(maxY-minY); j <= maxY; j+=0.005*(maxY-minY))
+            for(double j = 0; j <= maxY; j+=0.005*((int)maxY-(int)minY))
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection%10 != 0)
+                if(numberOfSection%5 == 0)
                 {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * (maxY - minY), j), xyToPoint(i + 0.007 * (maxY - minY), j));
+                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
                     canvas.draw(testGridLine);
                 }
                 else
                 {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * (maxY - minY), j), xyToPoint(i + 0.005 * (maxY - minY), j));
+                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
                     canvas.draw(testGridLine);
                 }
-            }
-            numberOfSection = 0;
-            for(double j = 0.005*(maxY-minY); j <= maxX; j+=0.005*(maxY-minY))
-            {
                 numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection % 10 != 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * (maxY - minY)), xyToPoint(j, i + 0.007 * (maxY - minY)));
-                    canvas.draw(testGridLine);
-                }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * (maxY - minY)), xyToPoint(j, i + 0.005 * (maxY - minY)));
-                    canvas.draw(testGridLine);
-                }
             }
             numberOfSection = 0;
-            for(double j = -0.005*(maxY-minY); j >= minX; j-=0.005*(maxY-minY))
+            if(minX < 0) {
+                for (double j = 0; j > minX; j -= 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
+                }
+                numberOfSection = 0;
+            }
+            else
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection % 10 != 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * (maxY - minY)), xyToPoint(j, i + 0.007 * (maxY - minY)));
-                    canvas.draw(testGridLine);
+                for (double j = 0; j < minX; j += 0.005 * ((int)maxY - (int)minY)) {
+
+                    if (numberOfSection % 5 == 0) {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.007 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.007 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    } else {
+                        Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * ((int)maxY - (int)minY)), xyToPoint(j, i + 0.005 * ((int)maxY - (int)minY)));
+                        canvas.draw(testGridLine);
+                    }
+                    numberOfSection++;
                 }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(j, i - 0.005 * (maxY - minY)), xyToPoint(j, i + 0.005 * (maxY - minY)));
-                    canvas.draw(testGridLine);
-                }
+                numberOfSection = 0;
             }
-            numberOfSection = 0;
         }
-        for(double i = 0; i >= minY; i-=0.05*(maxY-minY)) {
+        for(double i = 0; i >= minX; i-=0.05*((int)maxY-(int)minY)) {
             Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(minX, i), xyToPoint(maxX, i));
             canvas.draw(horizontalGridLine);
-            for(double j = minY+0.005*(maxY-minY); j <= maxY; j+=0.005*(maxY-minY))
+            for(double j = 0; j <= maxY; j+=0.005*((int)maxY-(int)minY))
             {
-                numberOfSection++;
-                if(numberOfSection%5 == 0 && numberOfSection%10 != 0)
+
+                if(numberOfSection%5 == 0)
                 {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * (maxY - minY), j), xyToPoint(i + 0.007 * (maxY - minY), j));
+                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
                     canvas.draw(testGridLine);
                 }
                 else
                 {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * (maxY - minY), j), xyToPoint(i + 0.005 * (maxY - minY), j));
+                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
                     canvas.draw(testGridLine);
                 }
+                numberOfSection++;
             }
+
         }
+
+
     }
     /* Метод-помощник, осуществляющий преобразование координат.
     * Оно необходимо, т.к. верхнему левому углу холста с координатами
@@ -457,6 +615,11 @@ protected void paintGrid(Graphics2D canvas)
 // Вычисляем смещение Y от точки верхней точки (maxY)
         double deltaY = maxY - y;
         return new Point2D.Double(deltaX * scale, deltaY * scale);
+    }
+    protected Double oneValueToPointValue(double value)
+    {
+        double deltaValue = value - minY;
+        return deltaValue*scale;
     }
 
     /* Метод-помощник, возвращающий экземпляр класса Point2D.Double

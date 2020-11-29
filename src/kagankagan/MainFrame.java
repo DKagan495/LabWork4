@@ -28,6 +28,7 @@ public class MainFrame extends JFrame {
     private JCheckBoxMenuItem showAxisMenuItem;
     private JCheckBoxMenuItem showMarkersMenuItem;
     private JCheckBoxMenuItem showGridMenuItem;
+    private JCheckBoxMenuItem leftRotateMenuItem;
     // Компонент-отображатель графика
     private GraphicsDisplay display = new GraphicsDisplay();
     // Флаг, указывающий на загруженность данных графика
@@ -104,7 +105,17 @@ public void actionPerformed(ActionEvent event) {
         showGridMenuItem = new JCheckBoxMenuItem(showGridAction);
         graphicsMenu.add(showGridMenuItem);
 // Элемент по умолчанию включен (отмечен флажком)
-        showGridMenuItem.setSelected(true);
+        showGridMenuItem.setSelected(false);
+        Action leftRotateAction = new AbstractAction("Rotate to 90")
+        {
+            public void actionPerformed(ActionEvent event) {
+                display.setRotate(leftRotateMenuItem.isSelected());
+            }
+        };
+        leftRotateMenuItem = new JCheckBoxMenuItem(leftRotateAction);
+        graphicsMenu.add(leftRotateMenuItem);
+// Элемент по умолчанию включен (отмечен флажком)
+        leftRotateMenuItem.setSelected(false);
 // Зарегистрировать обработчик событий, связанных с меню "График"
         graphicsMenu.addMenuListener(new GraphicsMenuListener());
 // Установить GraphicsDisplay в цент граничной компоновки
