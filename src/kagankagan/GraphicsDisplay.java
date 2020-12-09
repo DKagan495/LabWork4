@@ -19,8 +19,8 @@ public class GraphicsDisplay extends JPanel {
     // Флаговые переменные, задающие правила отображения графика
     private boolean showAxis = true;
     private boolean showMarkers = true;
-    private boolean showGrid = true;
-    private boolean Rotate = true;
+    private boolean showGrid = false;
+    private boolean toLeftRotate = false;
     private boolean isConcreteValue(double value)
     {
         int toControl = 0;
@@ -56,8 +56,10 @@ public class GraphicsDisplay extends JPanel {
     private BasicStroke axisStroke;
     private BasicStroke markerStroke;
     private BasicStroke gridStroke;
+    private BasicStroke delenijaStroke;
     // Различные шрифты отображения надписей
     private Font axisFont;
+    private Font gridFont;
 
     public GraphicsDisplay() {
 // Цвет заднего фона области отображения - белый
@@ -73,6 +75,8 @@ public class GraphicsDisplay extends JPanel {
         gridStroke = new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
 // Шрифт для подписей осей координат
         axisFont = new Font("Serif", Font.BOLD, 36);
+        gridFont = new Font("Serif", Font.BOLD, 20);
+
     }
 
     // Данный метод вызывается из обработчика элемента меню "Открыть файл с графиком"
@@ -101,9 +105,10 @@ public class GraphicsDisplay extends JPanel {
         this.showGrid = showGrid;
         repaint();
     }
-    public void setRotate(boolean Rotate)
+    public void setRotate(boolean toLeftRotate)
     {
-        this.Rotate = Rotate;
+        this.toLeftRotate = toLeftRotate;
+        repaint();
     }
     // Метод отображения всего компонента, содержащего график
     public void paintComponent(Graphics g) {
@@ -171,14 +176,15 @@ minY
 // Шаг 8 - В нужном порядке вызвать методы отображения элементов графика
 // Порядок вызова методов имеет значение, т.к. предыдущий рисунок будет затираться последующим
 // Первыми (если нужно) отрисовываются оси координат.
-        if(showGrid) paintGrid(canvas);
-        if (showAxis) paintAxis(canvas);
+        if (toLeftRotate) {rotateTo90left(canvas);}
+        if (showAxis) {paintAxis(canvas);}
 // Затем отображается сам график
         paintGraphics(canvas);
 // Затем (если нужно) отображаются маркеры точек, по которым строился график.
-        if (showMarkers) paintMarkers(canvas);
+        if (showMarkers) {paintMarkers(canvas);}
+        if(showGrid) {paintGrid(canvas);}
+        if (toLeftRotate) {rotateTo90left(canvas);}
         // rotate
-        if (Rotate) rotateTo90left(canvas);
 // Шаг 9 - Восстановить старые настройки холста
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
@@ -346,14 +352,70 @@ minY
         at = AffineTransform.getRotateInstance(-1.5707963267948966D, this.getSize().getWidth() / 2.0D, this.getSize().getHeight() / 2.0D);
         at.concatenate(new AffineTransform(this.getSize().getHeight() / this.getSize().getWidth(), 0.0D, 0.0D, this.getSize().getWidth() / this.getSize().getHeight(), (this.getSize().getWidth() - this.getSize().getHeight()) / 2.0D, (this.getSize().getHeight() - this.getSize().getWidth()) / 2.0D));
         canvas.setTransform(at);
+        System.out.println("qqq");
     }
 protected void paintGrid(Graphics2D canvas)
     {
-
         int numberOfSection = 0;
         canvas.setStroke(gridStroke);
         canvas.setColor(Color.GRAY);
-        // up to 0
+        canvas.setFont(gridFont);
+        // горизонтальные линии сетки от 0 вверх
+        if(maxY>0);
+        for(double i = 0; i <= getToolkit().getScreenSize().height/2; i+=0.05*((int)maxY-(int)minY))
+        {
+
+
+            Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(-getToolkit().getScreenSize().width/2, i), xyToPoint(getToolkit().getScreenSize().width/2, i));
+            canvas.draw(horizontalGridLine);
+            Point2D.Double labelPos = xyToPoint(0, maxY);
+        }
+        //горизонтальные линии сетки от 0 вниз
+        if(minY<0) {
+            for (double i = 0; i >= -getToolkit().getScreenSize().height / 2; i -= 0.05 * ((int) maxY - (int) minY)) {
+
+                Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(-getToolkit().getScreenSize().width / 2, i), xyToPoint(getToolkit().getScreenSize().width / 2, i));
+                canvas.draw(horizontalGridLine);
+                Point2D.Double labelPos = xyToPoint(0, maxY);
+            }
+        }
+        // вертикальные линии сетки от 0 влево
+        if(minX<0) {
+            for (double i = 0; i >= -getToolkit().getScreenSize().width / 2; i -= 0.05 * ((int) maxY - (int) minY)) {
+
+                Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(i, -getToolkit().getScreenSize().height / 2), xyToPoint(i, getToolkit().getScreenSize().height / 2));
+                canvas.draw(horizontalGridLine);
+            }
+        }
+        //вертикальные линии сетки от 0 вправо
+        if(maxX>0) {
+            for (double i = 0; i <= getToolkit().getScreenSize().width / 2; i += 0.05 * ((int) maxY - (int) minY)) {
+
+                Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(i, -getToolkit().getScreenSize().height / 2), xyToPoint(i, getToolkit().getScreenSize().height / 2));
+                canvas.draw(horizontalGridLine);
+            }
+        }
+
+// вертикальные маленькие линии, идущие горизонтально
+
+        Point2D.Double lPos = xyToPoint(0, 0);
+        for(double i = 0; i <= getToolkit().getScreenSize().height/2; i+=0.05*((int)maxY-(int)minY))
+        {
+            Point2D.Double labelPos = xyToPoint(0, maxY);
+        }
+        for(double i = 0; i >= minX; i-=0.05*((int)maxY-(int)minY))
+        {
+            Point2D.Double labelPos = xyToPoint(0, maxY);
+        }
+        for(double i = 0; i <= getToolkit().getScreenSize().width/2; i+=0.05*((int)maxY-(int)minY))
+        {
+            Point2D.Double labelPos = xyToPoint(maxX, 0);
+
+        }
+        for(double i = 0; i >= minX; i-=0.05*((int)maxY-(int)minY))
+        {
+            Point2D.Double labelPos = xyToPoint(0, maxY);
+        }
         for(double i = 0; i <= maxX; i+=0.05*((int)maxY-(int)minY)) {
             System.out.println(i);
             Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint((int)minX, i), xyToPoint((int)maxX, i));
@@ -620,6 +682,11 @@ protected void paintGrid(Graphics2D canvas)
     {
         double deltaValue = value - minY;
         return deltaValue*scale;
+    }
+    protected Float oneValueToPointValue(float value)
+    {
+        float deltaValue = value - (float)minY;
+        return deltaValue*(float)scale;
     }
 
     /* Метод-помощник, возвращающий экземпляр класса Point2D.Double
