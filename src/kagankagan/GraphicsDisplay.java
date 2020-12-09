@@ -641,26 +641,6 @@ protected void paintGrid(Graphics2D canvas)
                 numberOfSection = 0;
             }
         }
-        for(double i = 0; i >= minX; i-=0.05*((int)maxY-(int)minY)) {
-            Line2D.Double horizontalGridLine = new Line2D.Double(xyToPoint(minX, i), xyToPoint(maxX, i));
-            canvas.draw(horizontalGridLine);
-            for(double j = 0; j <= maxY; j+=0.005*((int)maxY-(int)minY))
-            {
-
-                if(numberOfSection%5 == 0)
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.007 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.007 * ((int)maxY - (int)minY), j));
-                    canvas.draw(testGridLine);
-                }
-                else
-                {
-                    Line2D.Double testGridLine = new Line2D.Double(xyToPoint(i - 0.005 * ((int)maxY - (int)minY), j), xyToPoint(i + 0.005 * ((int)maxY - (int)minY), j));
-                    canvas.draw(testGridLine);
-                }
-                numberOfSection++;
-            }
-
-        }
 
 
     }
